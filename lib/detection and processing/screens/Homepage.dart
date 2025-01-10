@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:speciesdectection/detection%20and%20processing/screens/Emergency_Contact_page.dart';
 import 'package:speciesdectection/detection%20and%20processing/screens/Feedbac_page.dart';
 import 'package:speciesdectection/detection%20and%20processing/screens/Noticationpage.dart';
-import 'package:speciesdectection/detection%20and%20processing/screens/Upload_Video_Page.dart';
+import 'package:speciesdectection/Admin/Screen/Upload_Video_Page.dart';
 import 'package:speciesdectection/detection%20and%20processing/screens/UserChat.dart';
 import 'package:speciesdectection/detection%20and%20processing/screens/login_screen.dart';
 import 'package:speciesdectection/detection%20and%20processing/screens/profile.dart';

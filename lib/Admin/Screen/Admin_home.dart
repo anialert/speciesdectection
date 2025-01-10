@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:speciesdectection/Admin/AdminChat.dart';
 import 'package:speciesdectection/Admin/Screen/Admin_live_camara_screen.dart';
 import 'package:speciesdectection/Admin/Screen/ManageUsersPage.dart';
+import 'package:speciesdectection/Admin/Screen/Upload_Video_Page.dart';
 import 'package:speciesdectection/Admin/Screen/ViewFeedbackPage.dart';
 import 'package:speciesdectection/Admin/Screen/ManageEmergencyContactPage.dart';
 import 'package:speciesdectection/Admin/Screen/SendNotificationsPage.dart';
@@ -65,7 +66,7 @@ class _AdminHomeState extends State<AdminHome> {
               crossAxisSpacing: 16.0,
               mainAxisSpacing: 16.0,
             ),
-            itemCount: 5,
+            itemCount: 6,
             itemBuilder: (context, index) {
               return AdminPrivilegeCard(
                 title: _getPrivilegeTitle(index),
@@ -99,6 +100,9 @@ class _AdminHomeState extends State<AdminHome> {
         return 'Manage Emergency Contact';
       case 4:
         return 'Detection';
+      case 5:
+        return 'upload video';
+      
       default:
         return 'Privilege $index';
     }
@@ -115,6 +119,8 @@ class _AdminHomeState extends State<AdminHome> {
       case 3:
         return const Icon(Icons.phone);
       case 4:
+        return const Icon(Icons.upload);
+      case 5:
         return const Icon(Icons.upload);
       default:
         return const Icon(Icons.lock);
@@ -155,6 +161,14 @@ class _AdminHomeState extends State<AdminHome> {
         Navigator.push(
           context,
           MaterialPageRoute(builder: (context) =>  AdminCameraScreen()),
+        );
+
+      case 5:
+
+      
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) =>  UploadVideoPage()),
         );
         break;
       default:

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:tflite_flutter/tflite_flutter.dart';
 import 'dart:typed_data';
 import 'dart:math';
+import 'dart:ui' as ui;
 
 class AdminCameraScreen extends StatefulWidget {
   @override
@@ -16,8 +17,8 @@ class _AdminCameraScreenState extends State<AdminCameraScreen> {
 
   bool isLoading = true;
   bool isModelLoaded = false;
-  List<dynamic> _detections = [];
-  static const int inputSize = 300; // Input size for the SSD MobileNet model
+  List<Map<String, dynamic>> _detections = [];
+  static const int inputSize = 300; // Input size for SSD MobileNet
   static const double threshold = 0.5; // Confidence threshold
   late List<String> _labels;
 
@@ -35,9 +36,9 @@ class _AdminCameraScreenState extends State<AdminCameraScreen> {
       print('Model loaded successfully.');
 
       // Load labels
-      final rawLabels =
-          await DefaultAssetBundle.of(context).loadString('asset/images/ssd_mobilenet.txt');
-      _labels = rawLabels.split('\n');
+      final rawLabels = await DefaultAssetBundle.of(context)
+          .loadString('asset/images/ssd_mobilenet.txt');
+      _labels = rawLabels.split('\n').where((label) => label.isNotEmpty).toList();
 
       setState(() {
         isModelLoaded = true;
@@ -49,7 +50,6 @@ class _AdminCameraScreenState extends State<AdminCameraScreen> {
 
   Future<void> _initializeCamera() async {
     try {
-      // Obtain a list of available cameras
       final cameras = await availableCameras();
       final firstCamera = cameras.first;
 
@@ -60,7 +60,6 @@ class _AdminCameraScreenState extends State<AdminCameraScreen> {
 
       await _controller.initialize();
 
-      // Start the image stream and process the frames
       _controller.startImageStream((CameraImage image) {
         if (!isLoading && isModelLoaded) {
           setState(() {
@@ -78,68 +77,129 @@ class _AdminCameraScreenState extends State<AdminCameraScreen> {
     }
   }
 
-  Future<void> _runModel(CameraImage image) async {
-    try {
-      // Ensure the model is loaded
-      if (!isModelLoaded) return;
+ Future<void> _runModel(CameraImage image) async {
+  try {
+    if (!isModelLoaded) {
+      print('Model not loaded yet.');
+      return;
+    }
 
-      // Preprocess the image
-      final input = _preprocessImage(image);
+    // Preprocess the image
+    Uint8List input = _preprocessImage(image);
 
-      // Define the output tensors
-      final outputBoxes = List.filled(1 * 1917 * 4, 0.0).reshape([1, 1917, 4]);
-      final outputClasses = List.filled(1 * 1917, 0.0).reshape([1, 1917]);
-      final outputScores = List.filled(1 * 1917, 0.0).reshape([1, 1917]);
+    // Define the output tensors with the correct shapes
+    final outputBoxes = List.filled(1 * 10 * 4, 0.0).reshape([1, 10, 4]); // [1, 10, 4]
+    final outputScores = List.filled(1 * 10, 0.0).reshape([1, 10]);       // [1, 10]
+    final outputClasses = List.filled(1 * 10, 0.0).reshape([1, 10]);      // [1, 10]
+    final outputValidDetections = List.filled(1, 0.0);                    // [1]
 
-      // Run inference
-      _interpreter.runForMultipleInputs([input], {
-        0: outputBoxes,
-        1: outputScores,
-        2: outputClasses,
-      });
+    // Run inference
+    _interpreter.run(input, {
+      0: outputBoxes,
+      1: outputScores,
+      2: outputClasses,
+      3: outputValidDetections,
+    });
 
-      // Parse results
-      _detections = _parseDetections(outputBoxes, outputScores, outputClasses);
-      setState(() {});
-    } catch (e) {
-      print('Error running model: $e');
-    } finally {
-      setState(() {
-        isLoading = false;
-      });
+    // Parse results
+    _detections = _parseDetections(outputBoxes, outputScores, outputClasses);
+
+    setState(() {});
+  } catch (e) {
+    print('Error running model: $e');
+  } finally {
+    setState(() {
+      isLoading = false;
+    });
+  }
+}
+
+Uint8List _preprocessImage(CameraImage image) {
+  final int width = image.width;
+  final int height = image.height;
+
+  Uint8List rgbBytes = Uint8List(width * height * 3);
+
+  // Extract YUV planes
+  final Plane yPlane = image.planes[0];
+  final Plane uPlane = image.planes[1];
+  final Plane vPlane = image.planes[2];
+
+  for (int y = 0; y < height; y++) {
+    for (int x = 0; x < width; x++) {
+      final int yValue = yPlane.bytes[y * yPlane.bytesPerRow + x];
+      final int uValue = uPlane.bytes[(y ~/ 2) * uPlane.bytesPerRow + (x ~/ 2)];
+      final int vValue = vPlane.bytes[(y ~/ 2) * vPlane.bytesPerRow + (x ~/ 2)];
+
+      final r = (yValue + 1.402 * (vValue - 128)).clamp(0, 255).toInt();
+      final g = (yValue - 0.344136 * (uValue - 128) - 0.714136 * (vValue - 128)).clamp(0, 255).toInt();
+      final b = (yValue + 1.772 * (uValue - 128)).clamp(0, 255).toInt();
+
+      final int index = (y * width + x) * 3;
+      rgbBytes[index] = r;
+      rgbBytes[index + 1] = g;
+      rgbBytes[index + 2] = b;
     }
   }
 
-  Uint8List _preprocessImage(CameraImage image) {
-    // Resize and normalize the image
-    // Convert to Uint8List format
-    // You may need to implement resizing and normalization based on the input requirements of your model.
-    Uint8List processedImage = Uint8List(inputSize * inputSize * 3);
-    return processedImage;
-  }
+  // Resize to 300x300 (model input size)
+  Uint8List resizedBytes = _resizeImage(rgbBytes, width, height, inputSize, inputSize);
 
-  List<Map<String, dynamic>> _parseDetections(
-      dynamic boxes,
-      dynamic scores,
-      dynamic classes) {
-      dynamic detections = [];
-    for (int i = 0; i < scores[0].length; i++) {
-      if (scores[0][i] > threshold) {
-        detections.add({
-          'boundingBox': Rect.fromLTRB(
-            boxes[0][i][0],
-            boxes[0][i][1],
-            boxes[0][i][2],
-            boxes[0][i][3],
-          ),
-          'confidence': scores[0][i],
-          'label': _labels[classes[0][i].toInt()],
-        });
-      }
+  // If the model expects Float32, normalize to [-1, 1]
+  // If Uint8 is expected, skip normalization
+  if (_interpreter.getInputTensor(0).type == TfLiteType.kTfLiteFloat32) {
+    Float32List normalizedBytes = Float32List(inputSize * inputSize * 3);
+    for (int i = 0; i < resizedBytes.length; i++) {
+      normalizedBytes[i] = (resizedBytes[i] - 127.5) / 127.5;
     }
-    return detections;
+    return Uint8List.view(normalizedBytes.buffer);
   }
 
+  return resizedBytes; // For Uint8 input
+}
+
+Uint8List _resizeImage(Uint8List input, int srcWidth, int srcHeight, int dstWidth, int dstHeight) {
+  final Uint8List output = Uint8List(dstWidth * dstHeight * 3);
+
+  for (int y = 0; y < dstHeight; y++) {
+    for (int x = 0; x < dstWidth; x++) {
+      final int srcX = (x * srcWidth / dstWidth).floor();
+      final int srcY = (y * srcHeight / dstHeight).floor();
+
+      final int srcIndex = (srcY * srcWidth + srcX) * 3;
+      final int dstIndex = (y * dstWidth + x) * 3;
+
+      output[dstIndex] = input[srcIndex];
+      output[dstIndex + 1] = input[srcIndex + 1];
+      output[dstIndex + 2] = input[srcIndex + 2];
+    }
+  }
+
+  return output;
+}
+
+List<Map<String, dynamic>> _parseDetections(
+    List<dynamic> boxes, List<dynamic> scores, List<dynamic> classes) {
+  List<Map<String, dynamic>> detections = [];
+  for (int i = 0; i < min(scores[0].length, 10); i++) {
+    if (scores[0][i] > threshold) {
+      detections.add({
+        'boundingBox': Rect.fromLTRB(
+          boxes[0][i][1] * inputSize, // xmin
+          boxes[0][i][0] * inputSize, // ymin
+          boxes[0][i][3] * inputSize, // xmax
+          boxes[0][i][2] * inputSize, // ymax
+        ),
+        'confidence': scores[0][i],
+        'label': _labels[classes[0][i].toInt()],
+      });
+    }
+  }
+  return detections;
+}
+
+
+  
   @override
   void dispose() {
     _controller.dispose();
