@@ -5,7 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 class EmergencyContactPage extends StatelessWidget {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  const EmergencyContactPage({super.key});
+   EmergencyContactPage({super.key});
 
   // Fetch emergency contacts from Firestore
   Future<List<Map<String, String>>> _getEmergencyContacts() async {
