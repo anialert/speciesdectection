@@ -8,6 +8,7 @@ import 'package:speciesdectection/Admin/Screen/Upload_Video_Page.dart';
 import 'package:speciesdectection/detection%20and%20processing/screens/UserChat.dart';
 import 'package:speciesdectection/detection%20and%20processing/screens/login_screen.dart';
 import 'package:speciesdectection/detection%20and%20processing/screens/profile.dart';
+import 'package:speciesdectection/detection%20and%20processing/screens/user_notification.dart';
 
 class Homepage extends StatefulWidget {
   const Homepage({super.key});
@@ -204,6 +205,16 @@ class _HomepageState extends State<Homepage> {
                             context,
                             MaterialPageRoute(
                                 builder: (context) => const FeedbackPage())),
+                      );
+                    case 3:
+                      return buildFeatureBox(
+                        context,
+                        'Notifiacation',
+                        Icons.feedback,
+                        () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) =>  NotificationScreen())),
                       );
                     default:
                       return const SizedBox();
