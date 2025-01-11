@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:speciesdectection/Admin/AdminChat.dart';
-import 'package:speciesdectection/Admin/Screen/Admin_live_camara_screen.dart';
 import 'package:speciesdectection/Admin/Screen/ManageUsersPage.dart';
-import 'package:speciesdectection/Admin/Screen/Upload_Video_Page.dart';
 import 'package:speciesdectection/Admin/Screen/ViewFeedbackPage.dart';
 import 'package:speciesdectection/Admin/Screen/ManageEmergencyContactPage.dart';
 import 'package:speciesdectection/Admin/Screen/SendNotificationsPage.dart';
@@ -66,7 +64,7 @@ class _AdminHomeState extends State<AdminHome> {
               crossAxisSpacing: 16.0,
               mainAxisSpacing: 16.0,
             ),
-            itemCount: 6,
+            itemCount: 4,
             itemBuilder: (context, index) {
               return AdminPrivilegeCard(
                 title: _getPrivilegeTitle(index),
@@ -76,14 +74,6 @@ class _AdminHomeState extends State<AdminHome> {
             },
           ),
         ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => const ApiScreen()),
-        ),
-        tooltip: 'Go to Admin Page',
-        child: const Icon(Icons.settings),
       ),
     );
   }
@@ -95,13 +85,9 @@ class _AdminHomeState extends State<AdminHome> {
       case 1:
         return 'View Feedback';
       case 2:
-        return 'Send Notifications';
+        return 'Notifications';
       case 3:
         return 'Manage Emergency Contact';
-      case 4:
-        return 'Detection';
-      case 5:
-        return 'upload video';
       
       default:
         return 'Privilege $index';
@@ -118,10 +104,6 @@ class _AdminHomeState extends State<AdminHome> {
         return const Icon(Icons.notifications);
       case 3:
         return const Icon(Icons.phone);
-      case 4:
-        return const Icon(Icons.upload);
-      case 5:
-        return const Icon(Icons.upload);
       default:
         return const Icon(Icons.lock);
     }
@@ -149,30 +131,16 @@ class _AdminHomeState extends State<AdminHome> {
         break;
       case 3:
 
-      
         Navigator.push(
           context,
           MaterialPageRoute(builder: (context) => const ManageEmergencyContactPage()),
         );
         break;
-      case 4:
+     
 
-      
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) =>  AdminCameraScreen()),
-        );
-
-      case 5:
-
-      
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) =>  UploadVideoPage()),
-        );
-        break;
+     
       default:
-        print('Invalid privilege');
+        
     }
   }
 }

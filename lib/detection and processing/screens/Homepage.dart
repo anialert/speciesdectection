@@ -9,40 +9,52 @@ import 'package:speciesdectection/detection%20and%20processing/screens/UserChat.
 import 'package:speciesdectection/detection%20and%20processing/screens/login_screen.dart';
 import 'package:speciesdectection/detection%20and%20processing/screens/profile.dart';
 
-class Homepage extends StatelessWidget {
+class Homepage extends StatefulWidget {
   const Homepage({super.key});
+
+  @override
+  State<Homepage> createState() => _HomepageState();
+}
+
+class _HomepageState extends State<Homepage> {
+  bool isAlertEnabled = false; // State to track alert toggle
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'Welcome To Wild Alert',
-          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-        ),
+       
         backgroundColor: const Color.fromARGB(255, 201, 167, 105),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.chat),
-            onPressed: () {
-              // Navigate to ChatPage
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                    builder: (context) =>
-                        const ChatPage()), // Navigate to the ChatPage
-              );
-            },
+          // Alert Toggle Switch
+          Row(
+            children: [
+              const Text(
+                "Alert",
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+              Switch(
+                value: isAlertEnabled,
+                onChanged: (value) {
+                  setState(() {
+                    isAlertEnabled = value;
+                  });
+                  if (isAlertEnabled) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Alert Enabled')),
+                    );
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Alert Disabled')),
+                    );
+                  }
+                },
+                activeColor: Colors.green,
+                inactiveThumbColor: Colors.red,
+              ),
+            ],
           ),
-          IconButton(
-            icon: const Icon(Icons.notifications),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const NotificationsPage()),
-              );
-            },
-          ),
+         
         ],
       ),
       drawer: Drawer(
@@ -110,28 +122,22 @@ class Homepage extends StatelessWidget {
                   title: const Text('Logout'),
                   onTap: () async {
                     try {
-await FirebaseFirestore.instance.collection('playerId') .doc(FirebaseAuth.instance.currentUser?.uid).delete();
- await FirebaseAuth.instance.signOut();
-   ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Logged out')),
-                    );
-                    Navigator.pushAndRemoveUntil(
-                      context,
-                      MaterialPageRoute(builder: (context) => const LoginPage()),
-                      (route) => false,
-                    );
- print("User logged out successfully.");
-} catch (e) {
- print("Error logging out: $e");
- }
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Logged out')),
-                    );
-                    Navigator.pushAndRemoveUntil(
-                      context,
-                      MaterialPageRoute(builder: (context) => const LoginPage()),
-                      (route) => false,
-                    );
+                      await FirebaseFirestore.instance
+                          .collection('playerId')
+                          .doc(FirebaseAuth.instance.currentUser?.uid)
+                          .delete();
+                      await FirebaseAuth.instance.signOut();
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Logged out')),
+                      );
+                      Navigator.pushAndRemoveUntil(
+                        context,
+                        MaterialPageRoute(builder: (context) => const LoginPage()),
+                        (route) => false,
+                      );
+                    } catch (e) {
+                      print("Error logging out: $e");
+                    }
                   },
                 ),
               ],
@@ -172,24 +178,14 @@ await FirebaseFirestore.instance.collection('playerId') .doc(FirebaseAuth.instan
                     case 0:
                       return buildFeatureBox(
                         context,
-                        'Upload Video',
-                        Icons.upload_file,
-                        () => Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => const UploadVideoPage())),
-                      );
-                    case 1:
-                      return buildFeatureBox(
-                        context,
                         'Safety Tips',
                         Icons.info_outline,
                         () => Navigator.push(
                             context,
                             MaterialPageRoute(
-                                builder: (context) => Scaffold())),
+                                builder: (context) => const Scaffold())),
                       );
-                    case 2:
+                    case 1:
                       return buildFeatureBox(
                         context,
                         'Emergency Contact',
@@ -197,9 +193,9 @@ await FirebaseFirestore.instance.collection('playerId') .doc(FirebaseAuth.instan
                         () => Navigator.push(
                             context,
                             MaterialPageRoute(
-                                builder: (context) =>  EmergencyContactPage())),
+                                builder: (context) => EmergencyContactPage())),
                       );
-                    case 3:
+                    case 2:
                       return buildFeatureBox(
                         context,
                         'Feedback',
@@ -207,7 +203,7 @@ await FirebaseFirestore.instance.collection('playerId') .doc(FirebaseAuth.instan
                         () => Navigator.push(
                             context,
                             MaterialPageRoute(
-                                builder: (context) =>  FeedbackPage())),
+                                builder: (context) => const FeedbackPage())),
                       );
                     default:
                       return const SizedBox();

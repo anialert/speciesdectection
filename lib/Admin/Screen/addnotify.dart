@@ -67,7 +67,7 @@ class _AddNotifyState extends State<AddNotify> {
       body: ElevatedButton(onPressed: () {
         
         
-      }, child: Text('notify') ),
+      }, child: const Text('notify') ),
     );
   }
 }
