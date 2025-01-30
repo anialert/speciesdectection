@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:onesignal_flutter/onesignal_flutter.dart';
 import 'package:speciesdectection/detection%20and%20processing/screens/Emergency_Contact_page.dart';
 import 'package:speciesdectection/detection%20and%20processing/screens/Feedbac_page.dart';
 import 'package:speciesdectection/detection%20and%20processing/screens/Noticationpage.dart';
@@ -9,6 +10,7 @@ import 'package:speciesdectection/detection%20and%20processing/screens/UserChat.
 import 'package:speciesdectection/detection%20and%20processing/screens/login_screen.dart';
 import 'package:speciesdectection/detection%20and%20processing/screens/profile.dart';
 import 'package:speciesdectection/detection%20and%20processing/screens/user_notification.dart';
+import 'package:speciesdectection/detection%20and%20processing/screens/usersafteylistscreen.dart';
 
 class Homepage extends StatefulWidget {
   const Homepage({super.key});
@@ -19,6 +21,36 @@ class Homepage extends StatefulWidget {
 
 class _HomepageState extends State<Homepage> {
   bool isAlertEnabled = false; // State to track alert toggle
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    setalert();
+  }
+
+  bool isloading = false;
+
+  void setalert()async{
+    setState(() {
+      isloading = true;
+    });
+   
+
+   final data = await  FirebaseFirestore.instance
+        .collection('playerId')
+        .doc(FirebaseAuth.instance.currentUser?.uid).get();
+
+        if(data.exists){
+          
+            isAlertEnabled = true;
+        }else{
+          isAlertEnabled = false;
+        }
+
+    setState(() {
+      isloading = false;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -28,6 +60,11 @@ class _HomepageState extends State<Homepage> {
         backgroundColor: const Color.fromARGB(255, 201, 167, 105),
         actions: [
           // Alert Toggle Switch
+
+         isloading ?
+         CircularProgressIndicator()
+         
+          : 
           Row(
             children: [
               const Text(
@@ -36,15 +73,30 @@ class _HomepageState extends State<Homepage> {
               ),
               Switch(
                 value: isAlertEnabled,
-                onChanged: (value) {
+                onChanged: (value) async {
                   setState(() {
                     isAlertEnabled = value;
                   });
                   if (isAlertEnabled) {
+
+                    final playerId = OneSignal.User.pushSubscription.id;
+
+                    FirebaseFirestore.instance
+                        .collection('playerId')
+                        .doc(FirebaseAuth.instance.currentUser?.uid)
+                        .set({
+                      'playerId': playerId});
+
+
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(content: Text('Alert Enabled')),
                     );
                   } else {
+
+                    FirebaseFirestore.instance
+                        .collection('playerId')
+                        .doc(FirebaseAuth.instance.currentUser?.uid)
+                        .delete();
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(content: Text('Alert Disabled')),
                     );
@@ -133,7 +185,7 @@ class _HomepageState extends State<Homepage> {
                       );
                       Navigator.pushAndRemoveUntil(
                         context,
-                        MaterialPageRoute(builder: (context) => const LoginPage()),
+                        MaterialPageRoute(builder: (context) => LoginPage()),
                         (route) => false,
                       );
                     } catch (e) {
@@ -181,10 +233,13 @@ class _HomepageState extends State<Homepage> {
                         context,
                         'Safety Tips',
                         Icons.info_outline,
-                        () => Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => const Scaffold())),
+                        () {
+                          Navigator.push(
+  context,
+  MaterialPageRoute(builder: (context) => const SafetyTipsListScreen()),
+);
+
+                        }
                       );
                     case 1:
                       return buildFeatureBox(
@@ -206,16 +261,7 @@ class _HomepageState extends State<Homepage> {
                             MaterialPageRoute(
                                 builder: (context) => const FeedbackPage())),
                       );
-                    case 3:
-                      return buildFeatureBox(
-                        context,
-                        'Notifiacation',
-                        Icons.feedback,
-                        () => Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) =>  NotificationScreen())),
-                      );
+                    
                     default:
                       return const SizedBox();
                   }

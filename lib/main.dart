@@ -56,10 +56,10 @@ Future<Widget> determineHomeScreen() async {
       }
     } catch (e) {
       print('Error checking admin role: $e');
-      return const LoginPage(); // Fallback to login on error
+      return LoginPage(); // Fallback to login on error
     }
   } else {
-    return const LoginPage(); // Login screen for unauthenticated users
+    return LoginPage(); // Login screen for unauthenticated users
   }
 }
 

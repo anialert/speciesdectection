@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'AddUser.dart';
-import 'RemoveUser.dart';
+import 'RemoveUser.dart'; // Assuming you have this file
 
 class ManageUsersPage extends StatefulWidget {
   const ManageUsersPage({super.key});
@@ -10,12 +9,12 @@ class ManageUsersPage extends StatefulWidget {
 }
 
 class _ManageUsersPageState extends State<ManageUsersPage> {
-  bool _isAddingUser = true;
+  // Set to false so only the Remove User section is visible
+  bool _isAddingUser = false;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Manage Users')),
       body: Container(
         // Gradient background for the entire page
         decoration: const BoxDecoration(
@@ -33,53 +32,13 @@ class _ManageUsersPageState extends State<ManageUsersPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Toggle buttons to switch between Add and Remove User pages
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  ElevatedButton(
-                    onPressed: () {
-                      setState(() {
-                        _isAddingUser = true;
-                      });
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor:
-                          _isAddingUser ? Colors.blue : Colors.grey,
-                      padding:
-                          const EdgeInsets.symmetric(vertical: 14, horizontal: 24),
-                    ),
-                    child: const Text(
-                      'Add User',
-                      style: TextStyle(fontSize: 16),
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  ElevatedButton(
-                    onPressed: () {
-                      setState(() {
-                        _isAddingUser = false;
-                      });
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor:
-                          !_isAddingUser ? Colors.blue : Colors.grey,
-                      padding:
-                          const EdgeInsets.symmetric(vertical: 14, horizontal: 24),
-                    ),
-                    child: const Text(
-                      'Remove User',
-                      style: TextStyle(fontSize: 16),
-                    ),
-                  ),
-                ],
-              ),
+              // You can remove the Row with toggle buttons entirely since we're only showing the Remove User page
               const SizedBox(height: 20),
-              // AnimatedSwitcher for smooth transition between sections
+              // AnimatedSwitcher is still used, but it will only display RemoveUserPage now
               Expanded(
                 child: AnimatedSwitcher(
                   duration: const Duration(milliseconds: 300),
-                  child: _isAddingUser ? const AddUserPage() : const RemoveUserPage(),
+                  child: const RemoveUserPage(), // Only show Remove User page
                 ),
               ),
             ],

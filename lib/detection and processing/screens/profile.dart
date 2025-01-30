@@ -110,7 +110,7 @@ class ProfilePage extends StatelessWidget {
                             // Navigate to the LoginPage and remove all routes from the stack (so the user can't go back to the home page)
                             Navigator.of(context).pushAndRemoveUntil(
                               MaterialPageRoute(
-                                  builder: (context) => const LoginPage()),
+                                  builder: (context) => LoginPage()),
                               (route) => false,
                             );
                           },

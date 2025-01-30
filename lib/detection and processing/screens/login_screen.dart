@@ -5,138 +5,173 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:speciesdectection/Admin/Screen/Admin_home.dart';
 import 'package:speciesdectection/detection%20and%20processing/Service/UserAuthService.dart';
 import 'package:speciesdectection/detection%20and%20processing/screens/Forgotpassword.dart';
-import 'package:speciesdectection/detection%20and%20processing/screens/Homepage.dart'; // User home page
-import 'package:speciesdectection/detection%20and%20processing/screens/Registration_screen.dart'; // Signup page
+import 'package:speciesdectection/detection%20and%20processing/screens/Homepage.dart';
+import 'package:speciesdectection/detection%20and%20processing/screens/Registration_screen.dart';
 
-class LoginPage extends StatefulWidget {
-  const LoginPage({super.key});
-
+class LoginPage extends  StatefulWidget {
   @override
   State<LoginPage> createState() => _LoginPageState();
 }
 
 class _LoginPageState extends State<LoginPage> {
-  final TextEditingController emailController = TextEditingController();
+  final TextEditingController phoneController = TextEditingController();
+
   final TextEditingController passwordController = TextEditingController();
+
   bool showPassword = true;
-  bool isLoading = false; // Flag for loading state
+
+  bool isLoading = false; 
+ // Flag for loading state
   final _formKey = GlobalKey<FormState>();
 
-  void loginHandler() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    if (_formKey.currentState?.validate() ?? false) {
-      setState(() {
-        isLoading = true; // Start loading
-      });
 
-      try {
-        // Authenticate user
+  void loginHandler() async {
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  if (_formKey.currentState?.validate() ?? false) {
+    setState(() {
+      isLoading = true; // Start loading
+    });
+
+    try {
+      // Get the phone number entered by the user
+      String phone = phoneController.text.trim();
+
+      // First, check if the phone number exists in the Admin or Users collections
+      bool isAdmin = await checkAdminCollection(phone);
+      bool isUser = await checkUserCollection(phone);
+
+      print(isUser);
+      print(isAdmin);
+
+      if (isAdmin) {
+        // User is an admin
+        prefs.setString('user_role', 'admin');
+        
+        // Get the user's email from Firestore
+        String adminEmail = await getEmailForPhone(phone, 'Admin');
+        
+        // Authenticate user with email and password
         bool loginSuccess = await UserAuthService().userLogin(
-          email: emailController.text.trim(),
+          email: adminEmail, // Use the email of the admin to log in
+          password: passwordController.text,
+          context: context,
+        );
+        print(loginSuccess);
+
+        if (loginSuccess) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const AdminHome(),
+            ),
+          );
+        }
+      } else if (isUser) {
+        // User is a regular user
+        prefs.setString('user_role', 'user');
+        
+        // Get the user's email from Firestore
+        String userEmail = await getEmailForPhone(phone, 'Users',true);
+        print(userEmail);
+        
+        // Authenticate user with email and password
+        bool loginSuccess = await UserAuthService().userLogin(
+          email: userEmail, // Use the email of the user to log in
           password: passwordController.text,
           context: context,
         );
 
-        if(emailController.text == 'admin@gmail.com' ){
-
-          Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const AdminHome(),
-              ),
-            );
-          
-
-          
-
-        }
-
         if (loginSuccess) {
-          // Get authenticated user's email
-          String userEmail = FirebaseAuth.instance.currentUser?.email ?? '';
-
-          // Check Firestore collections
-          bool isAdmin = await checkAdminCollection(userEmail);
-          bool isUser = await checkUserCollection(userEmail);
-
-          if (isAdmin) {
-            // Navigate to Admin Homepage
-            prefs.setString('user_role', 'admin');
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const AdminHome(),
-              ),
-            );
-          } else if (isUser) {
-            prefs.setString('user_role', 'user'); // Navigate to User Homepage
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const Homepage(),
-              ),
-            );
-          } else {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text("User not found in any collection."),
-              ),
-            );
-          }
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const Homepage(),
+            ),
+          );
         }
-      } catch (e) {
+      } else {
+        // User does not exist in either collection
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text("Error: ${e.toString()}"),
+          const SnackBar(
+            content: Text("User not found in any collection."),
           ),
         );
       }
-
-      setState(() {
-        isLoading = false; // Stop loading
-      });
-    } else {
+    } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please fix errors in the form'),
+        SnackBar(
+          content: Text("Error: ${e.toString()}"),
         ),
       );
     }
+
+    setState(() {
+      isLoading = false; // Stop loading
+    });
+  } else {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Please fix errors in the form'),
+      ),
+    );
   }
+}
 
-  // Check if user exists in Admin collection
-  Future<bool> checkAdminCollection(String email) async {
-    try {
-      final adminSnapshot = await FirebaseFirestore.instance
-          .collection('Admin')
-          .where('email', isEqualTo: email)
-          .get();
+// Check if phone number exists in Admin collection
+Future<bool> checkAdminCollection(String phone) async {
+  try {
+    final adminSnapshot = await FirebaseFirestore.instance
+        .collection('Admin')
+        .where('phone', isEqualTo: phone)
+        .get();
 
-      return adminSnapshot.docs.isNotEmpty;
-    } catch (e) {
-      debugPrint("Error checking Admin collection: $e");
-      return false;
+    return adminSnapshot.docs.isNotEmpty;
+  } catch (e) {
+    debugPrint("Error checking Admin collection: $e");
+    return false;
+  }
+}
+
+// Check if phone number exists in Users collection
+Future<bool> checkUserCollection(String phone) async {
+  try {
+    final userSnapshot = await FirebaseFirestore.instance
+        .collection('Users')
+        .where('mobile', isEqualTo: phone)
+        .get();
+
+    return userSnapshot.docs.isNotEmpty;
+  } catch (e) {
+    debugPrint("Error checking Users collection: $e");
+    return false;
+  }
+}
+
+// Fetch the email associated with the phone number from Firestore (for Admin or Users)
+Future<String> getEmailForPhone(String phone, String collection,[bool isUser=false]) async {
+  try {
+    final snapshot = await FirebaseFirestore.instance
+        .collection(collection)
+        .where( isUser ? 'mobile' :'phone', isEqualTo: phone)
+        .get();
+        print(snapshot.docs.first['email']);
+
+    if (snapshot.docs.isNotEmpty) {
+      // Assuming each document has an 'email' field
+      return snapshot.docs.first['email'] ?? '';
     }
+    return '';
+  } catch (e) {
+    debugPrint("Error fetching email: $e");
+    return '';
   }
+}
 
-  // Check if user exists in Users collection
-  Future<bool> checkUserCollection(String email) async {
-    try {
-      final userSnapshot = await FirebaseFirestore.instance
-          .collection('Users')
-          .where('email', isEqualTo: email)
-          .get();
 
-      return userSnapshot.docs.isNotEmpty;
-    } catch (e) {
-      debugPrint("Error checking Users collection: $e");
-      return false;
-    }
-  }
 
   @override
   void dispose() {
-    emailController.dispose();
+    phoneController.dispose();
     passwordController.dispose();
     super.dispose();
   }
@@ -216,18 +251,18 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                   const SizedBox(height: 20),
 
-                  // Email TextField
+                  // Phone Number TextField
                   customTextField(
-                    emailController,
-                    'Email',
-                    Icons.email,
-                    keyboardType: TextInputType.emailAddress,
+                    phoneController,
+                    'Phone Number',
+                    Icons.phone,
+                    keyboardType: TextInputType.phone,
                     validator: (value) {
                       if (value == null || value.isEmpty) {
-                        return 'Please enter your email';
+                        return 'Please enter your phone number';
                       }
-                      if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value)) {
-                        return 'Please enter a valid email';
+                      if (value.length != 10) {
+                        return 'Please enter a valid phone number';
                       }
                       return null;
                     },

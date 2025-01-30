@@ -3,11 +3,9 @@ import 'package:speciesdectection/Admin/AdminChat.dart';
 import 'package:speciesdectection/Admin/Screen/ManageUsersPage.dart';
 import 'package:speciesdectection/Admin/Screen/ViewFeedbackPage.dart';
 import 'package:speciesdectection/Admin/Screen/ManageEmergencyContactPage.dart';
-import 'package:speciesdectection/Admin/Screen/SendNotificationsPage.dart';
+import 'package:speciesdectection/Admin/Screen/addsafteytips.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:speciesdectection/detection%20and%20processing/screens/login_screen.dart';
-
-import 'api.dart'; // Import Admin Chat Page
 
 class AdminHome extends StatefulWidget {
   const AdminHome({super.key});
@@ -32,7 +30,7 @@ class _AdminHomeState extends State<AdminHome> {
               await FirebaseAuth.instance.signOut();
               Navigator.pushReplacement(
                 context,
-                MaterialPageRoute(builder: (context) => const LoginPage()),
+                MaterialPageRoute(builder: (context) => LoginPage()),
               );
             },
           ),
@@ -64,7 +62,7 @@ class _AdminHomeState extends State<AdminHome> {
               crossAxisSpacing: 16.0,
               mainAxisSpacing: 16.0,
             ),
-            itemCount: 4,
+            itemCount: 4, // Reduced count after removing Notifications card
             itemBuilder: (context, index) {
               return AdminPrivilegeCard(
                 title: _getPrivilegeTitle(index),
@@ -85,10 +83,9 @@ class _AdminHomeState extends State<AdminHome> {
       case 1:
         return 'View Feedback';
       case 2:
-        return 'Notifications';
-      case 3:
         return 'Manage Emergency Contact';
-      
+      case 3: // Safety Tip card
+        return 'Safety Tip';
       default:
         return 'Privilege $index';
     }
@@ -101,9 +98,9 @@ class _AdminHomeState extends State<AdminHome> {
       case 1:
         return const Icon(Icons.feedback);
       case 2:
-        return const Icon(Icons.notifications);
-      case 3:
         return const Icon(Icons.phone);
+      case 3: // Safety Tip Icon
+        return const Icon(Icons.security);
       default:
         return const Icon(Icons.lock);
     }
@@ -120,28 +117,28 @@ class _AdminHomeState extends State<AdminHome> {
       case 1:
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) =>  ViewFeedbackPage()),
+          MaterialPageRoute(builder: (context) => ViewFeedbackPage()),
         );
         break;
       case 2:
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => const SendNotificationsPage()),
-        );
-        break;
-      case 3:
-
-        Navigator.push(
-          context,
           MaterialPageRoute(builder: (context) => const ManageEmergencyContactPage()),
         );
         break;
-     
-
-     
+      case 3: // Safety Tip tapped
+        _showSafetyTip(context);
+        break;
       default:
-        
     }
+  }
+
+  // Show the safety tip content when tapped
+  void _showSafetyTip(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const AddSafetyTipScreen()),
+    );
   }
 }
 
@@ -150,8 +147,7 @@ class AdminPrivilegeCard extends StatelessWidget {
   final Icon icon;
   final VoidCallback onTap;
 
-  const AdminPrivilegeCard(
-      {super.key, required this.title, required this.icon, required this.onTap});
+  const AdminPrivilegeCard({super.key, required this.title, required this.icon, required this.onTap});
 
   @override
   Widget build(BuildContext context) {

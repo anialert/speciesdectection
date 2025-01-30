@@ -35,7 +35,7 @@ class UserAuthService {
       // Navigate to the LoginPage after successful sign-up
       Navigator.pushAndRemoveUntil(
         context,
-        MaterialPageRoute(builder: (context) => const LoginPage()),
+        MaterialPageRoute(builder: (context) => LoginPage()),
         (route) => false,
       );
     } catch (e) {
@@ -52,11 +52,15 @@ class UserAuthService {
     required String password,
   }) async {
     try {
+       print('----------------------------------------------');
+
+      print(email);
       // Attempt to sign in using Firebase Authentication
       final user = await firebaseAuth.signInWithEmailAndPassword(
         email: email,
         password: password,
       );
+     
 
       final playerId = OneSignal.User.pushSubscription.id;
 
@@ -83,6 +87,7 @@ class UserAuthService {
           errorMessage = 'The email address is not valid.';
           break;
         default:
+        print(e);
           errorMessage = 'An error occurred. Please try again.';
       }
       ScaffoldMessenger.of(context).showSnackBar(
